@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Streaming Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .content {
+            display: flex;
+            min-height: 500px;
+        }
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        .breadcrumb {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .breadcrumb button {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            padding: 0;
+            margin-right: 5px;
+        }
+        .breadcrumb button:hover {
+            text-decoration: underline;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .file-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .file-item:hover {
+            background-color: #e9ecef;
+        }
+        .file-icon {
+            margin-right: 10px;
+            width: 20px;
+        }
+        .directory {
+            color: #007bff;
+        }
+        .file {
+            color: #6c757d;
+        }
+        .video-player {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            background: black;
+        }
+        .no-selection {
+            text-align: center;
+            color: #6c757d;
+            padding: 50px;
+            font-size: 18px;
+        }
+        .controls {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span style="font-size: 18px;">VODEE - Video Streaming Server</span>
+            <!-- <p>Browse and play your video files</p> -->
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <div class="breadcrumb" id="breadcrumb">
+                    <button onclick="navigateTo('/')">Home</button>
+                </div>
+                <ul class="file-list" id="fileList">
+                    <!-- 文件列表将动态加载 -->
+                </ul>
+            </div>
+            <div class="main-content">
+                <div id="playerArea">
+                    <div class="no-selection" id="noSelection">
+                        Select a video file to play
+                    </div>
+                    <div class="video-player" id="videoPlayer" style="display: none;">
+                        <div class="info-box" id="videoInfo" style="display: none;"></div>
+                        <video id="videoElement" controls>
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="controls">
+                            <button class="btn" id="copyLinkBtn" onclick="copyVideoLink()">Copy Video Link</button>
+                            <button class="btn" id="downloadBtn" onclick="downloadVideo()" disabled>Download (Restricted)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPath = '/';
+        let currentVideoPath = '';
+        let currentVideoUrl = '';
+        
+        // 页面加载时获取根目录
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDirectory('/');
+        });
+        
+        // 加载指定路径的目录
+        async function loadDirectory(path) {
+            try {
+                const response = await fetch(`/api/directory?path=${encodeURIComponent(path)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                currentPath = data.path;
+                updateBreadcrumb(currentPath);
+                renderFileList(data.items);
+            } catch (error) {
+                console.error('Error loading directory:', error);
+                alert('Error loading directory');
+            }
+        }
+        
+        // 更新面包屑导航
+        function updateBreadcrumb(path) {
+            const breadcrumbEl = document.getElementById('breadcrumb');
+            const pathParts = path.split('/').filter(p => p);
+            
+            let breadcrumbHtml = '<button onclick="navigateTo(\'/\')">Home</button>';
+            let currentPath = '';
+            
+            pathParts.forEach(part => {
+                currentPath += '/' + part;
+                breadcrumbHtml += ' / <button onclick="navigateTo(\'' + currentPath + '\')">' + part + '</button>';
+            });
+            
+            breadcrumbEl.innerHTML = breadcrumbHtml;
+        }
+        
+        // 渲染文件列表
+        function renderFileList(items) {
+            const fileListEl = document.getElementById('fileList');
+            fileListEl.innerHTML = '';
+            
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                
+                const icon = document.createElement('span');
+                icon.className = 'file-icon';
+                icon.innerHTML = item.type === 'directory' ? '📁' : '🎬';
+                
+                const name = document.createElement('span');
+                name.textContent = item.name;
+                name.className = item.type;
+                
+                li.appendChild(icon);
+                li.appendChild(name);
+                
+                if (item.type === 'directory') {
+                    li.onclick = () => navigateTo(item.path);
+                } else {
+                    li.onclick = () => playVideo(item.path);
+                }
+                
+                fileListEl.appendChild(li);
+            });
+        }
+        
+        // 导航到指定路径
+        function navigateTo(path) {
+            loadDirectory(path);
+        }
+        
+        // 播放视频
+        async function playVideo(videoPath) {
+            try {
+                // 获取带令牌的视频URL
+                const response = await fetch(`/api/video-url?path=${encodeURIComponent(videoPath)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                const videoElement = document.getElementById('videoElement');
+                const playerArea = document.getElementById('videoPlayer');
+                const noSelection = document.getElementById('noSelection');
+                const videoInfo = document.getElementById('videoInfo');
+                
+                // 设置视频源
+                currentVideoPath = videoPath;
+                currentVideoUrl = data.url;
+                videoElement.src = currentVideoUrl;
+                
+                // 显示视频信息
+                videoInfo.innerHTML = `
+                    <strong>Playing:</strong> ${videoPath}<br>
+                    <small>Token expires at: ${new Date(data.expiresAt).toLocaleString()}</small>
+                `;
+                videoInfo.style.display = 'block';
+                
+                // 显示播放器，隐藏提示文字
+                playerArea.style.display = 'block';
+                noSelection.style.display = 'none';
+                
+                // 尝试播放视频
+                videoElement.load();
+            } catch (error) {
+                console.error('Error playing video:', error);
+                alert('Error playing video');
+            }
+        }
+        
+        // 复制视频链接
+        function copyVideoLink() {
+            if (!currentVideoUrl) {
+                alert('No video selected');
+                return;
+            }
+            
+            navigator.clipboard.writeText(window.location.origin + currentVideoUrl)
+                .then(() => {
+                    alert('Video link copied to clipboard!');
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                    // 降级处理：显示链接让用户手动复制
+                    const dummy = document.createElement('input');
+                    document.body.appendChild(dummy);
+                    dummy.value = window.location.origin + currentVideoUrl;
+                    dummy.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(dummy);
+                    alert('Video link copied to clipboard!');
+                });
+        }
+        
+        // 下载视频（受限制）
+        function downloadVideo() {
+            alert('Direct downloading is restricted. Please use the embedded player.');
+        }
+        
+        // 处理浏览器后退按钮
+        window.addEventListener('popstate', function(event) {
+            // 简单实现，实际项目中可能需要更复杂的路由管理
+        });
+    </script>
+</body>
+</html>

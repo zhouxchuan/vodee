@@ -1,0 +1,21 @@
+{
+    "videoDirectory": "D:\\Videos",
+    "port": 3000,
+    "allowedExtensions": [
+        ".mp4",
+        ".avi",
+        ".mov",
+        ".mkv",
+        ".wmv",
+        ".flv",
+        ".webm"
+    ],
+    "enableAntiLeech": true,
+    "allowedDomains": [
+        "localhost",
+        "127.0.0.1",
+        "yourdomain.com"
+    ],
+    "leechTokenSecret": "your-super-secret-key-for-token-generation-please-change-this",
+    "tokenExpireTime": 3600
+}
