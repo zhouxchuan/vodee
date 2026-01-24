@@ -2,10 +2,10 @@
   "name": "vodee-server",
   "version": "1.0.0",
   "description": "A Node.js video streaming server that allows clients to browse and play videos",
-  "main": "server.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node main.js",
+    "dev": "nodemon --exec node main.js"
   },
   "keywords": [
     "video",
@@ -17,8 +17,10 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "path": "^0.12.7",
-    "fs": "^0.0.1-security"
+    "fs": "^0.0.1-security",
+    "js-md5": "^0.8.3",
+    "jsonwebtoken": "^9.0.3",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

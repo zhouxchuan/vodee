@@ -7,7 +7,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch via NPM Dev with Chrome",
+            "name": "Launch Vodee Server",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
                 "run",

@@ -17,5 +17,8 @@
         "yourdomain.com"
     ],
     "leechTokenSecret": "your-super-secret-key-for-token-generation-please-change-this",
-    "tokenExpireTime": 3600
+    "tokenExpireTime": 3600,
+    "adminUsername": "admin",
+    "adminPassword": "123456",
+    "jwtSecret": "your-jwt-secret-key"
 }
