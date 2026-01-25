@@ -17,11 +17,7 @@
                             </el-icon>
                             <span>{{ username }}</span>
                         </div>
-                        <el-button
-                            type="danger"
-                            size="small"
-                            @click="handleLogout"
-                        >
+                        <el-button type="danger" size="small" @click="handleLogout">
                             <el-icon>
                                 <SwitchButton />
                             </el-icon>
@@ -35,55 +31,25 @@
             <el-main class="main-content">
                 <el-row :gutter="0" class="split-layout">
                     <!-- 左侧栏 - 文件目录树 -->
-                    <el-col
-                        :xs="6"
-                        :sm="6"
-                        :md="6"
-                        :lg="6"
-                        :xl="6"
-                        class="left-panel"
-                    >
+                    <el-col :xs="6" :sm="6" :md="6" :lg="6" :xl="6" class="left-panel">
                         <el-card class="directory-card" shadow="never">
                             <div class="directory-header">
-                                <el-breadcrumb
-                                    :separator-icon="ArrowRight"
-                                    class="breadcrumb-container"
-                                >
-                                    <el-breadcrumb-item
-                                        v-for="item in directoryList"
-                                        :key="item.path"
-                                    >
-                                        <el-button
-                                            type="default"
-                                            link
-                                            size="default"
-                                            @click="loadDirectory(item.path)"
-                                            style="font-size: 16px"
-                                            >{{ item.name }}</el-button
-                                        >
+                                <el-breadcrumb :separator-icon="ArrowRight" class="breadcrumb-container">
+                                    <el-breadcrumb-item v-for="item in directoryList" :key="item.path">
+                                        <el-button type="default" link size="default" @click="loadDirectory(item.path)" style="font-size: 16px">{{ item.name }}</el-button>
                                     </el-breadcrumb-item>
                                 </el-breadcrumb>
                             </div>
                             <div class="directory-container">
-                                <ul
-                                    class="directory-list"
-                                    id="directory-list"
-                                    style="list-style-type: none"
-                                >
+                                <ul class="directory-list" id="directory-list" style="list-style-type: none">
                                     <li
                                         class="file-item"
                                         v-for="item in fileList"
                                         :key="item.path"
-                                        @click="
-                                            item.type == 'directory'
-                                                ? loadDirectory(item.path)
-                                                : playVideo(item.path)
-                                        "
+                                        @click="item.type == 'directory' ? loadDirectory(item.path) : playVideo(item.path)"
                                     >
                                         <el-icon>
-                                            <Folder
-                                                v-if="item.type == 'directory'"
-                                            ></Folder>
+                                            <Folder v-if="item.type == 'directory'"></Folder>
                                             <Film v-else></Film>
                                         </el-icon>
                                         {{ item.name }}
@@ -94,37 +60,19 @@
                     </el-col>
 
                     <!-- 右侧栏 - 视频播放器 -->
-                    <el-col
-                        :xs="18"
-                        :sm="18"
-                        :md="18"
-                        :lg="18"
-                        :xl="18"
-                        class="right-panel"
-                    >
+                    <el-col :xs="18" :sm="18" :md="18" :lg="18" :xl="18" class="right-panel">
                         <el-card class="player-card" shadow="never">
                             <div class="player-header">
                                 <div class="player-header-title">
                                     {{ videoInfo }}
                                 </div>
                                 <div class="player-header-buttons">
-                                    <el-button
-                                        :icon="Close"
-                                        circle
-                                        size="small"
-                                        @click="handleVideoClose()"
-                                        v-show="videoInfo"
-                                    ></el-button>
+                                    <el-button :icon="Close" circle size="small" @click="handleVideoClose()" v-show="videoInfo"></el-button>
                                 </div>
                             </div>
                             <div class="player-container">
-                                <video
-                                    id="videoPlayer"
-                                    class="video-player"
-                                    autoplay="true"
-                                >
-                                    Your browser does not support the video tag.
-                                </video>
+                                <!-- <video id="videoPlayer" class="video-player" autoplay="true">Your browser does not support the video tag.</video> -->
+                                <VideoPlayer ref="videoPlayerRef" class="video-player" :src="currentVideoSrc" :autoplay="true" />
                             </div>
                             <div class="player-footer">
                                 <span>All copyrights reserved by VODEE</span>
@@ -138,26 +86,19 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, onMounted, nextTick } from "vue";
-    import { useRouter } from "vue-router";
-    import {
-        Monitor,
-        User,
-        SwitchButton,
-        ArrowRight,
-        CircleClose,
-        Close,
-        Film,
-        Folder,
-    } from "@element-plus/icons-vue";
-    import { API_URL } from "@/utils/config";
-    import axios from "axios";
-
-    const videoInfo = ref("");
+    import { ref, onMounted } from 'vue';
+    import { useRouter } from 'vue-router';
+    import { Monitor, User, SwitchButton, ArrowRight, Close, Film, Folder } from '@element-plus/icons-vue';
+    import { API_URL } from '@/utils/config';
+    import axios from 'axios';
+    import VideoPlayer from '@/components/VideoPlayer.vue';
 
     // 响应式数据
-    const username = ref("管理员");
+    const username = ref('管理员');
     const router = useRouter();
+    const videoInfo = ref('');
+    const currentVideoSrc = ref('');
+    const videoPlayerRef = ref<typeof VideoPlayer | null>(null);
 
     interface DirectoryItem {
         path: string;
@@ -165,7 +106,7 @@
     }
 
     const directoryList = ref<DirectoryItem[]>([]);
-    directoryList.value = [{ path: "/", name: "Home" }];
+    directoryList.value = [{ path: '/', name: 'Home' }];
 
     // 接口定义
     interface FileItem {
@@ -181,11 +122,11 @@
     //------------------------------------------------------------------------------------
     onMounted(() => {
         // 检查登录状态
-        const isLoggedIn = localStorage.getItem("isLoggedIn");
-        const savedUsername = localStorage.getItem("username");
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        const savedUsername = localStorage.getItem('username');
 
         if (!isLoggedIn) {
-            router.push("/login");
+            router.push('/login');
             return;
         }
 
@@ -194,17 +135,17 @@
         }
 
         // 设置暗黑模式
-        document.documentElement.classList.add("dark");
+        document.documentElement.classList.add('dark');
 
         // 加载目录树
-        loadDirectory("/");
+        loadDirectory('/');
     });
 
     // 加载指定路径的目录
     const loadDirectory = async (path: string): Promise<void> => {
         try {
             path = encodeURIComponent(path);
-            const res = await axios.get(API_URL + "/directory", {
+            const res = await axios.get(API_URL + '/directory', {
                 params: {
                     path: path,
                 },
@@ -216,18 +157,18 @@
             }
 
             // 将当前路径分解为多个详细路径并存储到 directoryList 中
-            const pathParts: string[] = res.data.path.split("/");
+            const pathParts: string[] = res.data.path.split('/');
             directoryList.value = [];
             // 添加根目录
-            directoryList.value.push({ path: "/", name: "Home" });
+            directoryList.value.push({ path: '/', name: 'Home' });
 
             // 构建累积路径
-            let accumulatedPath = "";
+            let accumulatedPath = '';
             for (let i = 1; i < pathParts.length; i++) {
                 const item = pathParts[i];
                 if (item) {
                     // 忽略空字符串
-                    accumulatedPath += "/" + item;
+                    accumulatedPath += '/' + item;
                     directoryList.value.push({
                         path: accumulatedPath,
                         name: item,
@@ -238,7 +179,7 @@
             // 更新文件列表
             fileList.value = res.data.items;
         } catch (error) {
-            console.error("loadDirectory:", error);
+            console.error('loadDirectory:', error);
         }
     };
 
@@ -246,7 +187,7 @@
     const playVideo = async (videoPath: string): Promise<void> => {
         try {
             // 获取带令牌的视频URL
-            const res = await axios.get(API_URL + "/video-url", {
+            const res = await axios.get(API_URL + '/video-url', {
                 params: { path: videoPath },
             });
 
@@ -255,44 +196,51 @@
                 return;
             }
 
-            const fileName = videoPath.split("/").pop() || videoPath;
+            const fileName = videoPath.split('/').pop() || videoPath;
             videoInfo.value = fileName;
 
-            const videoElement: HTMLVideoElement = document.getElementById(
-                "videoPlayer",
-            ) as HTMLVideoElement;
-            videoElement.setAttribute("controls", "true");
+            //const videoElement: HTMLVideoElement = document.getElementById('videoPlayer') as HTMLVideoElement;
+            // videoElement.setAttribute('controls', 'true');
             const videoUrl: string = API_URL + res.data.url;
-            videoElement.src = videoUrl;
+            currentVideoSrc.value = videoUrl;
+            // videoElement.src = videoUrl;
 
-            // 设置额外的安全属性
-            videoElement.setAttribute("crossorigin", "anonymous");
+            console.log('videoUrl:', videoUrl);
 
-            videoElement.load();
+            setTimeout(() => {
+                if (videoPlayerRef.value) {
+                    videoPlayerRef.value.play();
+                }
+            }, 100);
 
             // 显示视频信息
             // Token expires at: ${new Date(data.expiresAt).toLocaleString()}
         } catch (error) {
-            console.error("playVideo:", error);
+            console.error('playVideo:', error);
         }
     };
 
     const handleLogout = (): void => {
-        localStorage.removeItem("isLoggedIn");
-        localStorage.removeItem("username");
-        localStorage.removeItem("token"); // 清除认证token
-        router.push("/login");
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username');
+        localStorage.removeItem('token'); // 清除认证token
+        router.push('/login');
     };
 
     const handleVideoClose = (): void => {
-        const videoElement: HTMLVideoElement = document.getElementById(
-            "videoPlayer",
-        ) as HTMLVideoElement;
-        videoElement.removeAttribute("controls");
-        videoElement.pause();
-        videoElement.src = "";
-        videoElement.load();
-        videoInfo.value = "";
+        // const videoElement: HTMLVideoElement = document.getElementById('videoPlayer') as HTMLVideoElement;
+        // videoElement.removeAttribute('controls');
+        // videoElement.pause();
+        // videoElement.src = '';
+        // videoElement.load();
+        // 重置视频源
+        currentVideoSrc.value = '';
+        videoInfo.value = '';
+
+        // 如果有视频播放器实例，调用其暂停方法
+        if (videoPlayerRef.value) {
+            videoPlayerRef.value.pause();
+        }
     };
 </script>
 

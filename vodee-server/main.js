@@ -12,7 +12,15 @@ const { md5 } = require("js-md5");
 config = {
     videoDirectory: "./videos",
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
-    allowedExtensions: [".mp4", ".avi", ".mov", ".mkv", ".wmv", ".flv", ".webm"],
+    allowedExtensions: [
+        ".mp4",
+        ".avi",
+        ".mov",
+        ".mkv",
+        ".wmv",
+        ".flv",
+        ".webm",
+    ],
     enableAntiLeech: true,
     allowedDomains: ["localhost", "127.0.0.1"],
     leechTokenSecret: "your-secret-key-for-token-generation",
@@ -45,7 +53,10 @@ const loadConfig = () => {
 const generateLeetchToken = (filePath) => {
     const expireTime = Date.now() + config.tokenExpireTime * 1000;
     const data = `${filePath}:${expireTime}`;
-    const hash = crypto.createHmac("sha256", config.leechTokenSecret).update(data).digest("hex");
+    const hash = crypto
+        .createHmac("sha256", config.leechTokenSecret)
+        .update(data)
+        .digest("hex");
     return `${hash}:${expireTime}`;
 };
 
@@ -63,9 +74,15 @@ const validateLeetchToken = (filePath, token) => {
     if (Date.now() > expireTime) return false;
 
     const expectedData = `${filePath}:${expireTime}`;
-    const expectedHash = crypto.createHmac("sha256", config.leechTokenSecret).update(expectedData).digest("hex");
+    const expectedHash = crypto
+        .createHmac("sha256", config.leechTokenSecret)
+        .update(expectedData)
+        .digest("hex");
 
-    return crypto.timingSafeEqual(Buffer.from(receivedHash), Buffer.from(expectedHash));
+    return crypto.timingSafeEqual(
+        Buffer.from(receivedHash),
+        Buffer.from(expectedHash),
+    );
 };
 
 // 检查Referer防盗链
@@ -84,7 +101,9 @@ const checkReferer = (req) => {
         const host = refererUrl.hostname;
 
         // 检查域名是否在允许列表中
-        return config.allowedDomains.some((domain) => host === domain || host.endsWith("." + domain));
+        return config.allowedDomains.some(
+            (domain) => host === domain || host.endsWith("." + domain),
+        );
     } catch (e) {
         // 如果无法解析referer URL，则拒绝访问
         return false;
@@ -94,7 +113,12 @@ const checkReferer = (req) => {
 // JWT认证中间件
 const jwtAuthMiddleware = (req, res, next) => {
     // 对于公共API路径，跳过认证
-    const publicPaths = ["/api/video", "/api/directory", "/api/video-url", "/api/login"];
+    const publicPaths = [
+        "/api/video",
+        "/api/directory",
+        "/api/video-url",
+        "/api/login",
+    ];
     if (publicPaths.some((path) => req.path.startsWith(path))) {
         next();
         return;
@@ -179,7 +203,16 @@ app.use((req, res, next) => {
 // 应用JWT认证中间件（除了登录和公共API外的所有路由）
 app.use("*", (req, res, next) => {
     // 跳过特定公共路由的认证
-    if (["/api/video", "/api/directory", "/api/video-url", "/api/login", "/", "/favicon.ico"].includes(req.path)) {
+    if (
+        [
+            "/api/video",
+            "/api/directory",
+            "/api/video-url",
+            "/api/login",
+            "/",
+            "/favicon.ico",
+        ].includes(req.path)
+    ) {
         next();
         return;
     }
@@ -196,7 +229,9 @@ app.use("/api/video", antiLeechMiddleware);
 
 // 获取目录结构的API
 app.get("/api/directory", (req, res) => {
-    const requestedPath = req.query.path ? decodeURIComponent(req.query.path) : "";
+    const requestedPath = req.query.path
+        ? decodeURIComponent(req.query.path)
+        : "";
     const fullPath = path.join(config.videoDirectory, requestedPath);
 
     try {
@@ -236,7 +271,9 @@ app.get("/api/directory", (req, res) => {
                     type: itemStats.isFile() ? "file" : "directory",
                     size: itemStats.size,
                     path: path.join(requestedPath, item).replace(/\\/g, "/"),
-                    extension: itemStats.isFile() ? path.extname(item).toLowerCase() : null,
+                    extension: itemStats.isFile()
+                        ? path.extname(item).toLowerCase()
+                        : null,
                 };
             });
 
@@ -333,7 +370,7 @@ app.get("/api/video-url", (req, res) => {
     const filePath = req.query.path ? decodeURIComponent(req.query.path) : "";
     const token = generateLeetchToken(filePath);
 
-    const videoUrl = `/api/video?path=${encodeURIComponent(filePath)}&token=${token}`;
+    const videoUrl = `/video?path=${encodeURIComponent(filePath)}&token=${token}`;
 
     const videoInfo = {
         url: videoUrl,
@@ -356,10 +393,13 @@ app.post("/api/login", (req, res) => {
         }
 
         // 验证凭据
-        if (data.username === config.adminUsername && data.password === md5(config.adminPassword)) {
+        if (
+            data.username === config.adminUsername &&
+            data.password === md5(config.adminPassword)
+        ) {
             // 生成JWT令牌
             const token = jwt.sign(
-                {username: data.username},
+                { username: data.username },
                 config.jwtSecret,
                 { expiresIn: config.tokenExpireTime }, // 使用配置中的过期时间
             );
@@ -390,7 +430,9 @@ app.get("/", (req, res) => {
 });
 
 app.listen(config.port, () => {
-    console.log(`Video streaming server running on http://localhost:${config.port}`);
+    console.log(
+        `Video streaming server running on http://localhost:${config.port}`,
+    );
     console.log(`Video directory: ${path.resolve(config.videoDirectory)}`);
     console.log(`Anti-leech enabled: ${config.enableAntiLeech}`);
     if (config.enableAntiLeech) {
