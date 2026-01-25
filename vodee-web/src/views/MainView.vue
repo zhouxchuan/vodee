@@ -72,7 +72,7 @@
                             </div>
                             <div class="player-container">
                                 <!-- <video id="videoPlayer" class="video-player" autoplay="true">Your browser does not support the video tag.</video> -->
-                                <VideoPlayer ref="videoPlayerRef" class="video-player" :src="currentVideoSrc" :autoplay="true" />
+                                <VideoPlayer ref="videoPlayerRef" class="video-player" :src="currentVideoSrc" :poster="currentVideoPoster" :autoplay="true" />
                             </div>
                             <div class="player-footer">
                                 <span>All copyrights reserved by VODEE</span>
@@ -98,6 +98,7 @@
     const router = useRouter();
     const videoInfo = ref('');
     const currentVideoSrc = ref('');
+    const currentVideoPoster = ref('');
     const videoPlayerRef = ref<typeof VideoPlayer | null>(null);
 
     interface DirectoryItem {
@@ -199,19 +200,16 @@
             const fileName = videoPath.split('/').pop() || videoPath;
             videoInfo.value = fileName;
 
-            //const videoElement: HTMLVideoElement = document.getElementById('videoPlayer') as HTMLVideoElement;
-            // videoElement.setAttribute('controls', 'true');
+            // 通过更新src属性来播放新视频
             const videoUrl: string = API_URL + res.data.url;
             currentVideoSrc.value = videoUrl;
-            // videoElement.src = videoUrl;
+            currentVideoPoster.value = ''; // 可以根据需要设置海报图片
 
-            console.log('videoUrl:', videoUrl);
-
-            setTimeout(() => {
-                if (videoPlayerRef.value) {
-                    videoPlayerRef.value.play();
-                }
-            }, 100);
+            // 等待下一帧后播放
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            if (videoPlayerRef.value) {
+                videoPlayerRef.value.play();
+            }
 
             // 显示视频信息
             // Token expires at: ${new Date(data.expiresAt).toLocaleString()}
@@ -228,19 +226,15 @@
     };
 
     const handleVideoClose = (): void => {
-        // const videoElement: HTMLVideoElement = document.getElementById('videoPlayer') as HTMLVideoElement;
-        // videoElement.removeAttribute('controls');
-        // videoElement.pause();
-        // videoElement.src = '';
-        // videoElement.load();
-        // 重置视频源
-        currentVideoSrc.value = '';
-        videoInfo.value = '';
-
-        // 如果有视频播放器实例，调用其暂停方法
+        // 暂停视频播放
         if (videoPlayerRef.value) {
             videoPlayerRef.value.pause();
         }
+
+        // 立即重置视频源，避免触发错误
+        currentVideoSrc.value = '';
+        currentVideoPoster.value = '';
+        videoInfo.value = '';
     };
 </script>
 
