@@ -71,8 +71,7 @@
                                 </div>
                             </div>
                             <div class="player-container">
-                                <!-- <video id="videoPlayer" class="video-player" autoplay="true">Your browser does not support the video tag.</video> -->
-                                <VideoPlayer ref="videoPlayerRef" class="video-player" :src="currentVideoSrc" :poster="currentVideoPoster" :autoplay="true" />
+                                <video ref="videoPlayerRef" class="video-player" autoplay>Your browser does not support the video tag.</video>
                             </div>
                             <div class="player-footer">
                                 <span>All copyrights reserved by VODEE</span>
@@ -91,15 +90,12 @@
     import { Monitor, User, SwitchButton, ArrowRight, Close, Film, Folder } from '@element-plus/icons-vue';
     import { API_URL } from '@/utils/config';
     import axios from 'axios';
-    import VideoPlayer from '@/components/VideoPlayer.vue';
 
     // 响应式数据
     const username = ref('管理员');
     const router = useRouter();
     const videoInfo = ref('');
-    const currentVideoSrc = ref('');
-    const currentVideoPoster = ref('');
-    const videoPlayerRef = ref<typeof VideoPlayer | null>(null);
+    const videoPlayerRef = ref<HTMLVideoElement | null>(null);
 
     interface DirectoryItem {
         path: string;
@@ -202,15 +198,13 @@
 
             // 通过更新src属性来播放新视频
             const videoUrl: string = API_URL + res.data.url;
-            currentVideoSrc.value = videoUrl;
-            currentVideoPoster.value = ''; // 可以根据需要设置海报图片
-
-            // 等待下一帧后播放
-            await new Promise((resolve) => setTimeout(resolve, 100));
             if (videoPlayerRef.value) {
-                videoPlayerRef.value.play();
+                videoPlayerRef.value.controls = true;
+                videoPlayerRef.value.volume = 0.5;
+                videoPlayerRef.value.muted = false;
+                videoPlayerRef.value.src = videoUrl;
+                 videoPlayerRef.value.load();
             }
-
             // 显示视频信息
             // Token expires at: ${new Date(data.expiresAt).toLocaleString()}
         } catch (error) {
@@ -229,11 +223,10 @@
         // 暂停视频播放
         if (videoPlayerRef.value) {
             videoPlayerRef.value.pause();
+            videoPlayerRef.value.src = '';
+            videoPlayerRef.value.load();
+            videoPlayerRef.value.controls = false;
         }
-
-        // 立即重置视频源，避免触发错误
-        currentVideoSrc.value = '';
-        currentVideoPoster.value = '';
         videoInfo.value = '';
     };
 </script>
