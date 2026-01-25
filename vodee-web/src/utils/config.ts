@@ -1,4 +1,12 @@
 // API配置
-const BASE_URL = 'http://localhost:3000' // 根据实际后端地址修改
 
-export { BASE_URL }
+const CURRENT_LOCATION = window.location;
+const CURRENT_PROTOCOL = CURRENT_LOCATION.protocol;
+const CURRENT_HOST = CURRENT_LOCATION.hostname;
+//const CURRENT_PORT = CURRENT_LOCATION.port
+const CURRENT_PORT = "3000";
+
+const BASE_URL = `${CURRENT_PROTOCOL}//${CURRENT_HOST}:${CURRENT_PORT}`;
+const API_URL = `${BASE_URL}/api`;
+
+export { BASE_URL, API_URL };

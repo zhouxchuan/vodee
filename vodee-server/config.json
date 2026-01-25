@@ -1,5 +1,5 @@
 {
-    "videoDirectory": "D:\\Videos",
+    "videoDirectory": "E:\\~cache\\.cache_W876AE87",
     "port": 3000,
     "allowedExtensions": [
         ".mp4",

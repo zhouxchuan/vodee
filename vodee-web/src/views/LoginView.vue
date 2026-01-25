@@ -9,13 +9,38 @@
                         </div>
                     </template>
 
-                    <el-form :model="form" :rules="rules" ref="loginForm" @submit.prevent="handleLogin" label-width="80px">
-                        <el-form-item label="用户名" prop="username" size="small">
-                            <el-input v-model="form.username" placeholder="请输入用户名" prefix-icon="User" />
+                    <el-form
+                        :model="form"
+                        :rules="rules"
+                        ref="loginForm"
+                        @submit.prevent="handleLogin"
+                        label-width="80px"
+                    >
+                        <el-form-item
+                            label="用户名"
+                            prop="username"
+                            size="small"
+                        >
+                            <el-input
+                                v-model="form.username"
+                                placeholder="请输入用户名"
+                                prefix-icon="User"
+                            />
                         </el-form-item>
 
-                        <el-form-item label="密码" prop="password" size="small" style="margin-top: 30px">
-                            <el-input v-model="form.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password />
+                        <el-form-item
+                            label="密码"
+                            prop="password"
+                            size="small"
+                            style="margin-top: 30px"
+                        >
+                            <el-input
+                                v-model="form.password"
+                                type="password"
+                                placeholder="请输入密码"
+                                prefix-icon="Lock"
+                                show-password
+                            />
                         </el-form-item>
 
                         <el-form-item style="margin-top: 30px">
@@ -28,13 +53,17 @@
                                 style="height: 35px"
                                 class="login-button"
                             >
-                                {{ loading ? '登录中...' : '立即登录' }}
+                                {{ loading ? "登录中..." : "立即登录" }}
                             </el-button>
                         </el-form-item>
                     </el-form>
 
                     <div v-if="errorMessage" class="error-message">
-                        <el-alert :title="errorMessage" type="error" show-icon />
+                        <el-alert
+                            :title="errorMessage"
+                            type="error"
+                            show-icon
+                        />
                     </div>
                 </el-card>
             </div>
@@ -43,41 +72,41 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, reactive, onMounted } from 'vue';
-    import { useRouter } from 'vue-router';
-    import type { FormInstance, FormRules } from 'element-plus';
-    import { Key, Loading } from '@element-plus/icons-vue';
-    import { Md5 } from 'ts-md5';
-    import { BASE_URL } from '@/utils/config';
-    import axios from 'axios';
+    import { ref, reactive, onMounted } from "vue";
+    import { useRouter } from "vue-router";
+    import type { FormInstance, FormRules } from "element-plus";
+    import { Key, Loading } from "@element-plus/icons-vue";
+    import { Md5 } from "ts-md5";
+    import { API_URL } from "@/utils/config";
+    import axios from "axios";
 
     const router = useRouter();
     const loginForm = ref<FormInstance>();
     const loading = ref(false);
-    const errorMessage = ref('');
+    const errorMessage = ref("");
 
     const form = reactive({
-        username: '',
-        password: '',
+        username: "",
+        password: "",
     });
 
     const rules: FormRules = {
         username: [
-            { required: true, message: '请输入用户名', trigger: 'blur' },
+            { required: true, message: "请输入用户名", trigger: "blur" },
             {
                 min: 3,
                 max: 20,
-                message: '用户名长度在 3 到 20 个字符',
-                trigger: 'blur',
+                message: "用户名长度在 3 到 20 个字符",
+                trigger: "blur",
             },
         ],
         password: [
-            { required: true, message: '请输入密码', trigger: 'blur' },
+            { required: true, message: "请输入密码", trigger: "blur" },
             {
                 min: 6,
                 max: 20,
-                message: '密码长度在 6 到 20 个字符',
-                trigger: 'blur',
+                message: "密码长度在 6 到 20 个字符",
+                trigger: "blur",
             },
         ],
     };
@@ -90,24 +119,24 @@
             if (!valid) return;
 
             loading.value = true;
-            errorMessage.value = '';
+            errorMessage.value = "";
 
             let data = {
                 username: form.username.trim(),
                 password: Md5.hashStr(form.password.trim()),
             };
 
-            const res = await axios.post(BASE_URL + '/api/login', {
+            const res = await axios.post(API_URL + "/login", {
                 data: data,
             });
 
             if (res.data.success) {
-                localStorage.setItem('username', form.username);
-                localStorage.setItem('token', res.data.token);
-                localStorage.setItem('isLoggedIn', 'true');
-                router.push('/main');
+                localStorage.setItem("username", form.username);
+                localStorage.setItem("token", res.data.token);
+                localStorage.setItem("isLoggedIn", "true");
+                router.push("/main");
             } else {
-                errorMessage.value = '用户名或密码错误！';
+                errorMessage.value = "用户名或密码错误！";
             }
             loading.value = false;
         } catch (error) {
@@ -117,7 +146,7 @@
 
     onMounted(() => {
         // 设置暗黑模式
-        document.documentElement.classList.add('dark');
+        document.documentElement.classList.add("dark");
     });
 </script>
 
